@@ -1,9 +1,0 @@
-
-
-in the given data, nodes with id = '0' are linked to themselves. 
-for instance a column(not firstcolumn) with the top value (which represent node id)= 0 and a row (not firstrow) with the most right value = 0: 
-	their intersection (link traffic) != 0 (i.e  (0, 0, some value))
-
-which means that a node is connected with itself, which is invalid. 
-
-Also, 
