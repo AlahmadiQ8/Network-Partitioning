@@ -83,7 +83,7 @@ def map_traffic_matrix(input_file):
 
 
 if __name__ == '__main__':
-	input_file = 'Traffic.dat'
+	input_file = 'data/Traffic.dat'
 	# check(input_file)
 	# print 'incoming_nodes: '
 	# print get_incoming_nodes(input_file)
@@ -98,7 +98,6 @@ if __name__ == '__main__':
 	# 	print x,y,z 
 	processed = [(x,y,z) for x,y,z in data if x!=y]
 	processed_in_out = [(x,y) for x,y,z in processed]
-
 
 	print len(data)
 	# print len(processed_in_out)
