@@ -81,27 +81,19 @@ def map_traffic_matrix(input_file):
 	mapped_list = filter_data(mapped_list)
 	return mapped_list
 
+def add_to_graph(input_file, G):
+	data = map_traffic_matrix(input_file)
+	G.add_weighted_edges_from(data)
+	for node in G.nodes():
+		nx.set_node_attributes(G,'cluster', {node: 'NA'})
+
+
+
 
 if __name__ == '__main__':
 	input_file = 'data/Traffic.dat'
-	# check(input_file)
-	# print 'incoming_nodes: '
-	# print get_incoming_nodes(input_file)
-	# print 'outgoing_nodes: '
-	# print get_outgoing_nodes(input_file)
-	data = map_traffic_matrix(input_file)
+
 	G = nx.DiGraph()
-	G.add_weighted_edges_from(data)
-	# for x,y,z in G.edges(data=True):
-	# 	print x,y,z
-	# for x,y,z in data:
-	# 	print x,y,z 
-	processed = [(x,y,z) for x,y,z in data if x!=y]
-	processed_in_out = [(x,y) for x,y,z in processed]
-
-	print len(data)
-	# print len(processed_in_out)
-	# print len(get_non_duplicates(processed_in_out))
+	add_to_graph(input_file, G)
+	print G.nodes(data=True)
 	print len(G.edges())
-	
-
