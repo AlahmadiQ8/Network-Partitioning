@@ -4,6 +4,13 @@ file input for network traffic
 
 import networkx as nx
 import matplotlib.pyplot as plt
+import random
+import sys
+
+def error(str):
+	print str
+	print '---> terminating'
+	sys.exit(1)
 
 def check(input_file):
 	""" for debuging only """
@@ -86,6 +93,34 @@ def add_to_graph(input_file, G):
 	G.add_weighted_edges_from(data)
 	[nx.set_node_attributes(G,'cluster', {node: 0}) for node in G.nodes()]
 
+def generate_solution(G, expected_numb_of_clusters):
+	""" returns an initial soluction of either n clusters or n+1 clusters 
+	based on divisibility of total number of nodes to n where n = expected_numb_of_clusters
+
+	based on n, if any of the generated clusters violates constrains, program terminates
+	"""
+	max_constraint = int(len(G.nodes())/2)
+	min_constraint = 2
+	temp = divmod(len(G.nodes()),expected_numb_of_clusters)
+	sample = temp[0] if temp[0] <= max_constraint else error('max_constraint violated')
+	sample_last = temp[1] if temp[1]>=min_constraint or temp[1]==0 else error('min_constraint violated')
+	nodelist = G.nodes()
+	clusters = []
+	for i in range(1,expected_numb_of_clusters+1):
+		sample_nodes = random.sample(nodelist, sample)
+		#print sample_nodes
+		clusters.append(Cluster(G,i,sample_nodes))
+		nodelist = [i for i in nodelist if i not in sample_nodes]
+		#print nodelist
+		if not nodelist: print 'list is empty'
+	if sample_last:
+		if not nodelist: error('wrong calculations of clusters')
+		clusters.append(Cluster(G,expected_numb_of_clusters+1, nodelist))
+	return clusters
+
+
+
+
 class Cluster(object):
 	""" represent a cluster 
 	attributes: graph, cluster id, list of nodes
@@ -93,8 +128,8 @@ class Cluster(object):
 	def __init__(self, G, cluster_id, nodes):
 		self.G = G
 		self.cluster_id = cluster_id
-		self.nodes = nodes
 		[nx.set_node_attributes(G,'cluster', {n: cluster_id}) for n in nodes]
+		self.nodes = [x for x,y in G.nodes_iter(data=True) if y == {'cluster': cluster_id}]
 
 	def node_cluster(self, node):
 		""" returns cluster id of this node """ 
@@ -103,20 +138,38 @@ class Cluster(object):
 	def BB(self):
 		""" returns backbone traffic of cluster """
 		outgoing = [(x,y,z) for x,y,z in G.out_edges_iter(self.nodes, data=True) if self.node_cluster(y) != self.cluster_id]
-		print '---> outgoing edges from cluster_%d are %s' % (self.cluster_id, str(outgoing).strip('[]'))
+		#print '---> outgoing edges from cluster_%d are %s' % (self.cluster_id, str(outgoing).strip('[]'))
 		return sum([z['weight'] for x,y,z in outgoing])
 
+	def num_of_nodes(self): return len(self.nodes)
 
 	def __str__(self):
-		return 'id: %d, # of nodes: %d, BB = %.2f' % (self.cluster_id, len(self.nodes), self.BB())
+		return 'id: %d, # of nodes: %d, BB = %.2f' % (self.cluster_id, self.num_of_nodes(), self.BB())
 
 
 if __name__ == '__main__':
-	input_file = 'data/trafficMatrix_A(original).txt'
+	input_file = 'data/traffic.dat'
 
 	G = nx.DiGraph()
 	add_to_graph(input_file, G)
+
+	# desired number of clusters
+	expected_numb_of_clusters = 4
+
+
+
+	clusters = generate_solution(G,expected_numb_of_clusters)
+
 	print len(G.nodes())
 	print len(G.edges())
 	print len([(x,y)  for x,y in G.nodes_iter(data=True) if y == {'cluster': 0}])
+
+	
+	for i in clusters:
+		print '------------------------' 
+		print i
+		print '------------------------' 
+		print i.nodes
+		print '************************' 
+		#print i.nodes
 
