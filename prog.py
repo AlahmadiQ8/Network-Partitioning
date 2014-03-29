@@ -119,6 +119,20 @@ class Cluster(object):
 	def __str__(self):
 		return 'id: %d, # of nodes: %d, BB = %.2f' % (self.cluster_id, self.num_of_nodes(), self.BB())
 
+	def add_node(self,node):
+		""" HAS TO BE USED ONLY WITH REMOVE FOR SWAP OPERATION ONLY 
+		otherwords, never use this function (assume private)"""
+		nx.set_node_attributes(G,'cluster', {node: self.cluster_id})
+		self.nodes.append(node)
+
+	def remove_node(self):
+		""" randomly removes a node and returns it
+		HAS TO BE USED ONLY WITH ADD FOR SWAP OPERATION ONLY 
+		otherwords, never use this function (assume private)"""
+		node = random.choice(self.nodes)
+		self.nodes.remove(node)
+		return node
+
 class Solution(object):
 	""" Solution object representing n clusters """
 	def __init__(self,G,expected_numb_of_clusters):
@@ -134,37 +148,56 @@ class Solution(object):
 		sample_last = temp[1] if temp[1]>=min_constraint or temp[1]==0 else error('min_constraint violated')
 		nodelist = self.G.nodes()
 		self.clusters = []
-		for i in range(1,expected_numb_of_clusters+1):
+		for i in range(expected_numb_of_clusters):
 			sample_nodes = random.sample(nodelist, sample)
 			#print sample_nodes
 			self.clusters.append(Cluster(self.G,i,sample_nodes))
 			nodelist = [i for i in nodelist if i not in sample_nodes]
 			#print nodelist
-			if not nodelist: print 'list is empty'
 		if sample_last:
 			if not nodelist: error('wrong calculations of clusters')
-			self.clusters.append(Cluster(self.G,expected_numb_of_clusters+1, nodelist))
+			self.clusters.append(Cluster(self.G,expected_numb_of_clusters, nodelist))
+
+	def num_of_nodes(self): return sum([i.num_of_nodes() for i in self.clusters])
+
+	def total_BB(self):
+		"""returns total BB from clusters """
+		return sum([i.BB() for i in self.clusters])
+
+	def move(self):
+		""" randomly moves a node from a cluster to another while 
+		maintaining constraints """
+		max_constraint = int(len(self.G.nodes())/2)
+		min_constraint = 2
+
+		c1 = random.choice(self.clusters).cluster_id
+		while (self.clusters[c1].num_of_nodes()<=min_constraint): c1 = random.choice(self.clusters).cluster_id
+		c2 = random.choice(self.clusters).cluster_id 
+		while (c2==c1 or self.clusters[c2].num_of_nodes()>=max_constraint): c2 = random.choice(self.clusters).cluster_id 
+		print c1,' ', c2
+		self.clusters[c2].add_node(self.clusters[c1].remove_node())
 
 
 
 if __name__ == '__main__':
-	input_file = 'data/traffic.dat'
+	input_file = 'data/trafficMatrix_A(original).txt'
 
 	G = nx.DiGraph()
 	add_to_graph(input_file, G)
 
 	# desired number of clusters
-	expected_numb_of_clusters = 4
+	expected_numb_of_clusters = 6
 
 
 
-	# clusters = generate_solution(G,expected_numb_of_clusters)
+	
 	solution = Solution(G,expected_numb_of_clusters)
 
 	print len(G.nodes())
 	print len(G.edges())
-	print len([(x,y)  for x,y in G.nodes_iter(data=True) if y == {'cluster': 0}])
-
+	print len([(x,y)  for x,y in G.nodes_iter(data=True) if y == {'cluster': -1}])
+	print solution.num_of_nodes()
+	print solution.total_BB()
 
 	for i in solution.clusters:
 		print '------------------------' 
