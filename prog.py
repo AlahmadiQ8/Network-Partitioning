@@ -141,6 +141,7 @@ class Solution(object):
 		based on n, if any of the generated clusters violates constrains, program terminates
 		"""
 		self.G = G
+		[nx.set_node_attributes(self.G,'cluster', {n: -1}) for n in self.G.nodes()]
 		max_constraint = int(len(self.G.nodes())/2)
 		min_constraint = 2
 		temp = divmod(len(self.G.nodes()),expected_numb_of_clusters)
@@ -187,6 +188,8 @@ if __name__ == '__main__':
 
 	# desired number of clusters
 	expected_numb_of_clusters = 6
+	max_constraint = int(len(G.nodes())/2)
+	min_constraint = 2
 
 
 
@@ -206,4 +209,54 @@ if __name__ == '__main__':
 		print i.nodes
 		print '************************' 
 		#print i.nodes
+
+	solution.move()
+	solution.move()
+	solution.move()
+	solution.move()
+	solution.move()
+	solution.move()
+	solution.move()
+	solution.move()
+	solution.move()
+	solution.move()
+	solution.move()
+
+	for i in solution.clusters:
+		print '------------------------' 
+		print i
+		print '------------------------' 
+		print i.nodes
+		print '************************' 
+		#print i.nodes
+
+
+
+	# print '---> construct 4 clusters'
+	# expected_numb_of_clusters = 4
+	
+	# solutions = []
+	# for i in range(10):
+	# 	solutions.append(Solution(G,expected_numb_of_clusters))
+
+	# # print [i.total_BB() for i in solutions]
+	# print 'total BB ', solutions[0].total_BB()
+	# for i in solutions[0].clusters: 
+	# 	print i
+	# 	print '\t', i.nodes
+
+	# # solutions[0].clusters[0].add_node(solutions[0].clusters[1].remove_node())
+	# solutions[0].move()
+	# solutions[0].move()
+	# solutions[0].move()
+	# solutions[0].move()
+	# solutions[0].move()
+	# solutions[0].move()
+	# solutions[0].move()
+	# print "-------------"
+	# print 'total BB ', solutions[0].total_BB()
+	# for i in solutions[0].clusters: 
+	# 	print i
+	# 	print '\t', i.nodes
+
 
