@@ -97,21 +97,31 @@ def add_to_graph(input_file, G):
 class Cluster(object):
 	""" represent a cluster 
 	attributes: graph, cluster id, list of nodes
+
+	here, we get the graph G by reference since a collection of clusters have to refer
+	to the same graph, hence, we don't use self.G = G as we do in the Solution object
 	"""
 	def __init__(self, G, cluster_id, nodes):
-		self.G = G
 		self.cluster_id = cluster_id
 		[nx.set_node_attributes(G,'cluster', {n: cluster_id}) for n in nodes]
 		self.nodes = [x for x,y in G.nodes_iter(data=True) if y == {'cluster': cluster_id}]
 
 	def node_cluster(self, node):
 		""" returns cluster id of this node """ 
-		return self.G.node[node].items()[0][1]
+		return G.node[node].items()[0][1]
+
+	def get_nodes_attributes(self):
+		return G.nodes(data=True)
 
 	def BB(self):
 		""" returns backbone traffic of cluster """
-		outgoing = [(x,y,z) for x,y,z in G.out_edges_iter(self.nodes, data=True) if self.node_cluster(y) != self.cluster_id]
-		#print '---> outgoing edges from cluster_%d are %s' % (self.cluster_id, str(outgoing).strip('[]'))
+		outgoing = [(x,y,z) for x,y,z in G.out_edges_iter(self.nodes, data=True)\
+				    if self.node_cluster(y) != self.cluster_id and self.node_cluster(x) == self.cluster_id]
+		#print "--------------------BEGIN---------------------"
+		#print self.G.nodes(data=True)
+		#print "##########################################"
+		#print '---> outgoing edges from cluster_%d are %s\nnode 2: %d, node 4: %d' % (self.cluster_id, str(outgoing).strip('[]'), self.node_cluster(2), self.node_cluster(4))
+		#print "--------------------END---------------------"
 		return sum([z['weight'] for x,y,z in outgoing])
 
 	def num_of_nodes(self): return len(self.nodes)
@@ -134,7 +144,9 @@ class Cluster(object):
 		return node
 
 class Solution(object):
-	""" Solution object representing n clusters """
+	""" Solution object representing n clusters 
+
+	Here we do get a new copy of graph (G) because a solution is unique to the other solutions"""
 	def __init__(self,G,expected_numb_of_clusters):
 		""" initializes an initial solution of either n clusters or n+1 clusters 
 		based on divisibility of total number of nodes to n where n = expected_numb_of_clusters.
@@ -151,10 +163,10 @@ class Solution(object):
 		self.clusters = []
 		for i in range(expected_numb_of_clusters):
 			sample_nodes = random.sample(nodelist, sample)
-			#print sample_nodes
+			# print sample_nodes
 			self.clusters.append(Cluster(self.G,i,sample_nodes))
-			nodelist = [i for i in nodelist if i not in sample_nodes]
-			#print nodelist
+			nodelist = [n for n in nodelist if n not in sample_nodes]
+			# print nodelist
 		if sample_last:
 			if not nodelist: error('wrong calculations of clusters')
 			self.clusters.append(Cluster(self.G,expected_numb_of_clusters, nodelist))
@@ -181,13 +193,13 @@ class Solution(object):
 
 
 if __name__ == '__main__':
-	input_file = 'data/trafficMatrix_A(original).txt'
+	input_file = 'data/Traffic.dat'
 
 	G = nx.DiGraph()
 	add_to_graph(input_file, G)
 
 	# desired number of clusters
-	expected_numb_of_clusters = 6
+	expected_numb_of_clusters = 4
 	max_constraint = int(len(G.nodes())/2)
 	min_constraint = 2
 
@@ -202,13 +214,9 @@ if __name__ == '__main__':
 	print solution.num_of_nodes()
 	print solution.total_BB()
 
-	for i in solution.clusters:
-		print '------------------------' 
-		print i
-		print '------------------------' 
-		print i.nodes
-		print '************************' 
-		#print i.nodes
+	print 'total bb before ', solution.total_BB()
+	for i in solution.clusters: 
+		print '\t', i.nodes
 
 	solution.move()
 	solution.move()
@@ -222,13 +230,9 @@ if __name__ == '__main__':
 	solution.move()
 	solution.move()
 
-	for i in solution.clusters:
-		print '------------------------' 
-		print i
-		print '------------------------' 
-		print i.nodes
-		print '************************' 
-		#print i.nodes
+	print 'total bb after', solution.total_BB()
+	for i in solution.clusters: 
+		print '\t', i.nodes
 
 
 
