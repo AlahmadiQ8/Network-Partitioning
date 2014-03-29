@@ -84,16 +84,39 @@ def map_traffic_matrix(input_file):
 def add_to_graph(input_file, G):
 	data = map_traffic_matrix(input_file)
 	G.add_weighted_edges_from(data)
-	for node in G.nodes():
-		nx.set_node_attributes(G,'cluster', {node: 'NA'})
+	[nx.set_node_attributes(G,'cluster', {node: 0}) for node in G.nodes()]
+
+class Cluster(object):
+	""" represent a cluster 
+	attributes: graph, cluster id, list of nodes
+	"""
+	def __init__(self, G, cluster_id, nodes):
+		self.G = G
+		self.cluster_id = cluster_id
+		self.nodes = nodes
+		[nx.set_node_attributes(G,'cluster', {n: cluster_id}) for n in nodes]
+
+	def node_cluster(self, node):
+		""" returns cluster id of this node """ 
+		return self.G.node[node].items()[0][1]
+
+	def BB(self):
+		""" returns backbone traffic of cluster """
+		outgoing = [(x,y,z) for x,y,z in G.out_edges_iter(self.nodes, data=True) if self.node_cluster(y) != self.cluster_id]
+		print '---> outgoing edges from cluster_%d are %s' % (self.cluster_id, str(outgoing).strip('[]'))
+		return sum([z['weight'] for x,y,z in outgoing])
 
 
+	def __str__(self):
+		return 'id: %d, # of nodes: %d, BB = %.2f' % (self.cluster_id, len(self.nodes), self.BB())
 
 
 if __name__ == '__main__':
-	input_file = 'data/Traffic.dat'
+	input_file = 'data/trafficMatrix_A(original).txt'
 
 	G = nx.DiGraph()
 	add_to_graph(input_file, G)
-	print G.nodes(data=True)
+	print len(G.nodes())
 	print len(G.edges())
+	print len([(x,y)  for x,y in G.nodes_iter(data=True) if y == {'cluster': 0}])
+
