@@ -6,6 +6,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import random
 import sys
+from math import ceil
 
 def error(str):
 	print str
@@ -158,11 +159,19 @@ class Solution(object):
 		"""
 		self.G = G
 		[nx.set_node_attributes(self.G,'cluster', {n: -1}) for n in self.G.nodes()]
-		max_constraint = int(len(self.G.nodes())/2)
+		max_constraint = ceil(len(self.G.nodes())/2.0)
 		min_constraint = 2
 		temp = divmod(len(self.G.nodes()),expected_numb_of_clusters)
 		sample = temp[0] if temp[0] <= max_constraint else error('max_constraint violated')
-		sample_last = temp[1] if temp[1]>=min_constraint or temp[1]==0 else error('min_constraint violated')
+		if temp[1] >= min_constraint or temp[1] == 0:
+			sample_last = temp[1] #if temp[1]>=min_constraint or temp[1]==0 else error('min_constraint violated')
+		elif temp[1] == 1: 
+			sample_last = temp[1] + sample if (temp[1] + sample) <= max_constraint else error('max_constraint violated') 
+			expected_numb_of_clusters -= 1
+		else:
+			error('something wrong happened at determining clusters')
+
+
 		nodelist = self.G.nodes()
 		self.clusters = []
 		for i in range(expected_numb_of_clusters):
@@ -188,7 +197,7 @@ class Solution(object):
 	def move(self):
 		""" randomly moves a node from a cluster to another while 
 		maintaining constraints """
-		max_constraint = int(len(self.G.nodes())/2)
+		max_constraint = ceil(len(self.G.nodes())/2.0)
 		min_constraint = 2
 
 		c1 = random.choice(self.clusters).cluster_id
@@ -208,15 +217,16 @@ if __name__ == '__main__':
 	G1 = create_graph(data)
 	print G1.out_degree(8, weight='weight')
 
-	# desired number of clusters and constraints on cluster size and number of solutions 
-	expected_numb_of_clusters = 4
-	max_constraint = int(len(G1.nodes())/2)
+	# desired number of clusters and constraints on cluster size and N of solutions 
+	expected_numb_of_clusters = 3
+	max_constraint = ceil(len(G1.nodes())/2.0)
 	min_constraint = 2
 	N = 10
 	# generate N solutions 
 	solutions = []
 	for i in range(N):
-		solutions.append(Solution(G1,expected_numb_of_clusters))
+		new_graph = create_graph(data)
+		solutions.append(Solution(new_graph,expected_numb_of_clusters))
 
 	
 	# get solution with minimum BB
@@ -229,6 +239,7 @@ if __name__ == '__main__':
 	# sort solution based on Pi (actually, they will have the same ordering as with BB())
 	solutions.sort(key=lambda x: x.Pi)
 	print [i.Pi for i in solutions]
+	print [i.total_BB() for i in solutions]
 
 
 
