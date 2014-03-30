@@ -88,10 +88,13 @@ def map_traffic_matrix(input_file):
 	mapped_list = filter_data(mapped_list)
 	return mapped_list
 
-def add_to_graph(input_file, G):
-	data = map_traffic_matrix(input_file)
+def create_graph(data):
+	"""due to what it seems to be bugs in copying graphs (attributes are not copied
+	this function returns a graph based on input data. it will serve as to create copies of the graph"""
+	G = nx.DiGraph()
 	G.add_weighted_edges_from(data)
 	[nx.set_node_attributes(G,'cluster', {node: 0}) for node in G.nodes()]
+	return G
 
 
 class Cluster(object):
@@ -177,6 +180,10 @@ class Solution(object):
 		"""returns total BB from clusters """
 		return sum([i.BB() for i in self.clusters])
 
+	def assign_Pi(self, minBB):
+		""" assigns probability Pi = BB/minBB - 1 as dicussed with Nayaki """
+		self.Pi = float(self.total_BB())/minBB - 1 
+
 	def move(self):
 		""" randomly moves a node from a cluster to another while 
 		maintaining constraints """
@@ -195,72 +202,64 @@ class Solution(object):
 if __name__ == '__main__':
 	input_file = 'data/Traffic.dat'
 
-	G = nx.DiGraph()
-	add_to_graph(input_file, G)
+	# declare new graph
+	data = map_traffic_matrix(input_file)
+	G = create_graph(data)
 
-	# desired number of clusters
+	# desired number of clusters and constraints on cluster size and number of solutions 
 	expected_numb_of_clusters = 4
 	max_constraint = int(len(G.nodes())/2)
 	min_constraint = 2
+	N = 10
+	# generate N solutions 
+	solutions = []
+	for i in range(N):
+		solutions.append(Solution(G,expected_numb_of_clusters))
+
+	
+	# get solution with minimum BB
+	print [i.total_BB() for i in solutions]
+	solutions.sort(key=lambda x: x.total_BB())
+	minBB = solutions[0].total_BB()
+	print [i.total_BB() for i in solutions]
+	[i.assign_Pi(minBB) for i in solutions]
+	print [i.Pi for i in solutions]
+	# sort solution based on Pi (actually, they will have the same ordering as with BB())
+	solutions.sort(key=lambda x: x.Pi)
+	print [i.Pi for i in solutions]
+
 
 
 
 	
-	solution = Solution(G,expected_numb_of_clusters)
-
-	print len(G.nodes())
-	print len(G.edges())
-	print len([(x,y)  for x,y in G.nodes_iter(data=True) if y == {'cluster': -1}])
-	print solution.num_of_nodes()
-	print solution.total_BB()
-
-	print 'total bb before ', solution.total_BB()
-	for i in solution.clusters: 
-		print '\t', i.nodes
-
-	solution.move()
-	solution.move()
-	solution.move()
-	solution.move()
-	solution.move()
-	solution.move()
-	solution.move()
-	solution.move()
-	solution.move()
-	solution.move()
-	solution.move()
-
-	print 'total bb after', solution.total_BB()
-	for i in solution.clusters: 
-		print '\t', i.nodes
-
-
-
-	# print '---> construct 4 clusters'
-	# expected_numb_of_clusters = 4
 	
-	# solutions = []
-	# for i in range(10):
-	# 	solutions.append(Solution(G,expected_numb_of_clusters))
 
-	# # print [i.total_BB() for i in solutions]
-	# print 'total BB ', solutions[0].total_BB()
-	# for i in solutions[0].clusters: 
-	# 	print i
+	# print len(G.nodes())
+	# print len(G.edges())
+	# print len([(x,y)  for x,y in G.nodes_iter(data=True) if y == {'cluster': -1}])
+	# print solution.num_of_nodes()
+	# print solution.total_BB()
+
+	# print 'total bb before ', solution.total_BB()
+	# for i in solution.clusters: 
 	# 	print '\t', i.nodes
 
-	# # solutions[0].clusters[0].add_node(solutions[0].clusters[1].remove_node())
-	# solutions[0].move()
-	# solutions[0].move()
-	# solutions[0].move()
-	# solutions[0].move()
-	# solutions[0].move()
-	# solutions[0].move()
-	# solutions[0].move()
-	# print "-------------"
-	# print 'total BB ', solutions[0].total_BB()
-	# for i in solutions[0].clusters: 
-	# 	print i
+	# solution.move()
+	# solution.move()
+	# solution.move()
+	# solution.move()
+	# solution.move()
+	# solution.move()
+	# solution.move()
+	# solution.move()
+	# solution.move()
+	# solution.move()
+	# solution.move()
+
+	# print 'total bb after', solution.total_BB()
+	# for i in solution.clusters: 
 	# 	print '\t', i.nodes
+
+
 
 
