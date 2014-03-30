@@ -202,15 +202,15 @@ class Solution(object):
 		c1 = random.choice(self.clusters).cluster_id
 		while (self.clusters[c1].num_of_nodes()<=min_constraint): c1 = random.choice(self.clusters).cluster_id
 		c2 = random.choice(self.clusters).cluster_id 
-		while (c2==c1 or self.clusters[c2].num_of_nodes()>=max_constraint): c2 = random.choice(self.clusters).cluster_id 
-		print 'move ', c1,' ', c2
+		while (c2==c1 or self.clusters[c2].num_of_nodes()>max_constraint): c2 = random.choice(self.clusters).cluster_id 
+		#print 'move ', c1,' ', c2
 		removed_node = self.clusters[c1].remove_node(random.choice(self.clusters[c1].nodes))
 		self.clusters[c2].add_node(removed_node)
 		return (c1,c2,removed_node)
 
 	def move_back(self, info):
 		(c1,c2,removed_node) = info
-		print 'move back ', c2,' ', c1
+		#print 'move back ', c2,' ', c1
 		self.clusters[c1].add_node(self.clusters[c2].remove_node(removed_node))
 
 
@@ -221,14 +221,18 @@ if __name__ == '__main__':
 	# declare new graph
 	data = map_traffic_matrix(input_file)
 	G1 = create_graph(data)
+	nn = len(G1.nodes())
 
 
 	# desired number of clusters and constraints on cluster size and N of solutions 
-	# how m
+	# M : desired number of iterations 
+	# k : limit on how long to spend on a solution 
 	expected_numb_of_clusters = 3
-	max_constraint = ceil(len(G1.nodes())/2.0)
+	max_constraint = ceil(nn/2.0)
 	min_constraint = 2
 	N = 10
+	M = 50 
+	k = 100 
 	# generate N solutions 
 	solutions = []
 	for i in range(N):
@@ -237,22 +241,42 @@ if __name__ == '__main__':
 
 	
 	# get solution with minimum BB
+	print '\ninitial solutions...'
 	print [i.total_BB() for i in solutions]
+	print ''
 	solutions.sort(key=lambda x: x.total_BB())
 	minBB = solutions[0].total_BB()
 	[i.assign_Pi(minBB) for i in solutions]
-	print [i.Pi for i in solutions]
 	# sort solution based on Pi (actually, they will have the same ordering as with BB())
 	solutions.sort(key=lambda x: x.Pi)
-	# print [i.Pi for i in solutions]
+	print 'sorted solutions based on Pi...'
 	print [i.total_BB() for i in solutions]
+	print ''
 
 	# -----START ALGORITHM -----
-	for sol in solutions:
+	i = 0
+	for l1 in range(M):
+		if i == N: i = 0
 
-		old_BB = sol.total_BB()
+		for l2 in range(k):
+			old_BB = solutions[i].total_BB()
+			info = solutions[i].move()
+			if solutions[i].total_BB() < old_BB:
+				pass   # accept new solution 
+			else: 
+				solutions[i].move_back(info)
 
+		i+=1
 
+	solutions.sort(key=lambda x: x.total_BB())
+	print 'finished algorithm, new solutions are...'
+	print [i.total_BB() for i in solutions]
+	print ''
+
+	print 'clusters for best solution are...'
+	for v in solutions[0].clusters: 
+		print 'cluster ', v.cluster_id, 'outgoing traffic = ', v.BB()
+		print '\t', v.nodes
 
 
 
