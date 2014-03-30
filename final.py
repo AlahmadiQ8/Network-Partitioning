@@ -122,17 +122,12 @@ class Cluster(object):
 		""" returns backbone traffic of cluster """
 		outgoing = [(x,y,z) for x,y,z in self.graph.out_edges_iter(self.nodes, data=True)\
 				    if self.node_cluster(y) != self.cluster_id and self.node_cluster(x) == self.cluster_id]
-		#print "--------------------BEGIN---------------------"
-		#print self.G.nodes(data=True)
-		#print "##########################################"
-		#print '---> outgoing edges from cluster_%d are %s\nnode 2: %d, node 4: %d' % (self.cluster_id, str(outgoing).strip('[]'), self.node_cluster(2), self.node_cluster(4))
-		#print "--------------------END---------------------"
 		return sum([z['weight'] for x,y,z in outgoing])
 
 	def num_of_nodes(self): return len(self.nodes)
 
 	def __str__(self):
-		return 'id: %d, # of nodes: %d, BB = %.2f' % (self.cluster_id, self.num_of_nodes(), self.BB())
+		return 'cluster id: %d, # of nodes: %d, BB = %.2f' % (self.cluster_id, self.num_of_nodes(), self.BB())
 
 	def add_node(self,node):
 		""" HAS TO BE USED ONLY WITH REMOVE FOR SWAP OPERATION ONLY 
@@ -163,7 +158,7 @@ class Solution(object):
 		temp = divmod(len(self.G.nodes()),expected_numb_of_clusters)
 		sample = temp[0] if temp[0] <= max_constraint else error('max_constraint violated')
 		if temp[1] >= min_constraint or temp[1] == 0:
-			sample_last = temp[1] #if temp[1]>=min_constraint or temp[1]==0 else error('min_constraint violated')
+			sample_last = temp[1] 
 		elif temp[1] == 1: 
 			sample_last = temp[1] + sample if (temp[1] + sample) <= max_constraint else error('max_constraint violated') 
 			expected_numb_of_clusters -= 1
@@ -175,10 +170,8 @@ class Solution(object):
 		self.clusters = []
 		for i in range(expected_numb_of_clusters):
 			sample_nodes = random.sample(nodelist, sample)
-			# print sample_nodes
 			self.clusters.append(Cluster(self.G,i,sample_nodes))
 			nodelist = [n for n in nodelist if n not in sample_nodes]
-			# print nodelist
 		if sample_last:
 			if not nodelist: error('wrong calculations of clusters')
 			self.clusters.append(Cluster(self.G,expected_numb_of_clusters, nodelist))
@@ -216,14 +209,14 @@ class Solution(object):
 
 
 if __name__ == '__main__':
+
+	# specify file to import data from
 	input_file = 'data/trafficMatrix_A(original).txt'
 
 	# declare new graph
 	data = map_traffic_matrix(input_file)
-	#data = [(2,3,3),(3,1,3),(1,2,2),(1,5,1),(5,6,3),(6,4,4),(4,5,2)]
 	G1 = create_graph(data)
 	nn = len(G1.nodes())
-
 
 	# desired number of clusters and constraints on cluster size and N of solutions 
 	# M : desired number of iterations 
@@ -234,27 +227,26 @@ if __name__ == '__main__':
 	N = 10
 	M = 20 
 	k = 50 
-	# generate N solutions 
+
+	# ------generate N solutions------ 
 	solutions = []
 	for i in range(N):
 		new_graph = create_graph(data)
 		solutions.append(Solution(new_graph,expected_numb_of_clusters))
-
 	
-	# get solution with minimum BB
+	# ------get solution with minimum BB------
 	print '\ninitial solutions...'
 	print [i.total_BB() for i in solutions]
 	print ''
 	solutions.sort(key=lambda x: x.total_BB())
 	minBB = solutions[0].total_BB()
 	[i.assign_Pi(minBB) for i in solutions]
-	# sort solution based on Pi (actually, they will have the same ordering as with BB())
+	
+	# ------sort solution based on Pi (actually, they will have the same ordering as with BB())------
 	solutions.sort(key=lambda x: x.Pi)
-	print 'sorted solutions based on Pi...'
-	print [i.total_BB() for i in solutions]
-	print ''
 
-	# -----START ALGORITHM -----
+	# ------START ALGORITHM------
+	print '---> start algorithm...'
 	i = 0
 	for l1 in range(M):
 		if i == N: i = 0
@@ -265,48 +257,31 @@ if __name__ == '__main__':
 			if solutions[i].total_BB() < old_BB:
 				pass   # accept new solution 
 			else: 
-				solutions[i].move_back(info)
+				solutions[i].move_back(info) # reject new solution 
 
 		i+=1
 
 	solutions.sort(key=lambda x: x.total_BB())
-	print 'finished algorithm, new solutions are...'
+	print '---> finished algorithm, new solutions are...'
 	print [i.total_BB() for i in solutions]
 	print ''
 
 	print 'clusters for best solution are...'
 	for v in solutions[0].clusters: 
-		print 'cluster ', v.cluster_id, 'outgoing traffic = ', v.BB()
+		print v
 		print '\t', v.nodes
 
-	print ' total number of nodes ', solutions[0].num_of_nodes(), ' ', len(G1.nodes())
+	print 'writing results to out.txt...'
+	lines = []
+	for v in solutions[0].clusters:
+		line1 = 'cluster%d:' %(v.cluster_id)
+		line2 = " ".join(str(e) for e in v.nodes)
+		lines.extend([line1,line2])
+		lines.append('')
+	lines = '\n'.join(lines)
 
-
-	# print len(G.nodes())
-	# print len(G.edges())
-	# print len([(x,y)  for x,y in G.nodes_iter(data=True) if y == {'cluster': -1}])
-	# print solution.num_of_nodes()
-	# print solution.total_BB()
-
-	# print 'total bb before ', solution.total_BB()
-	# for i in solution.clusters: 
-	# 	print '\t', i.nodes
-
-	# solution.move()
-	# solution.move()
-	# solution.move()
-	# solution.move()
-	# solution.move()
-	# solution.move()
-	# solution.move()
-	# solution.move()
-	# solution.move()
-	# solution.move()
-	# solution.move()
-
-	# print 'total bb after', solution.total_BB()
-	# for i in solution.clusters: 
-	# 	print '\t', i.nodes
+	with open('data/out.txt', 'w') as f:
+		f.writelines(lines)
 
 
 
