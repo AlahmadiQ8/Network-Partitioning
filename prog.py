@@ -140,11 +140,10 @@ class Cluster(object):
 		nx.set_node_attributes(self.graph,'cluster', {node: self.cluster_id})
 		self.nodes.append(node)
 
-	def remove_node(self):
+	def remove_node(self, node):
 		""" randomly removes a node and returns it
 		HAS TO BE USED ONLY WITH ADD FOR SWAP OPERATION ONLY 
 		otherwords, never use this function (assume private)"""
-		node = random.choice(self.nodes)
 		self.nodes.remove(node)
 		return node
 
@@ -204,8 +203,15 @@ class Solution(object):
 		while (self.clusters[c1].num_of_nodes()<=min_constraint): c1 = random.choice(self.clusters).cluster_id
 		c2 = random.choice(self.clusters).cluster_id 
 		while (c2==c1 or self.clusters[c2].num_of_nodes()>=max_constraint): c2 = random.choice(self.clusters).cluster_id 
-		print c1,' ', c2
-		self.clusters[c2].add_node(self.clusters[c1].remove_node())
+		print 'move ', c1,' ', c2
+		removed_node = self.clusters[c1].remove_node(random.choice(self.clusters[c1].nodes))
+		self.clusters[c2].add_node(removed_node)
+		return (c1,c2,removed_node)
+
+	def move_back(self, info):
+		(c1,c2,removed_node) = info
+		print 'move back ', c2,' ', c1
+		self.clusters[c1].add_node(self.clusters[c2].remove_node(removed_node))
 
 
 
@@ -215,9 +221,10 @@ if __name__ == '__main__':
 	# declare new graph
 	data = map_traffic_matrix(input_file)
 	G1 = create_graph(data)
-	print G1.out_degree(8, weight='weight')
+
 
 	# desired number of clusters and constraints on cluster size and N of solutions 
+	# how m
 	expected_numb_of_clusters = 3
 	max_constraint = ceil(len(G1.nodes())/2.0)
 	min_constraint = 2
@@ -233,13 +240,19 @@ if __name__ == '__main__':
 	print [i.total_BB() for i in solutions]
 	solutions.sort(key=lambda x: x.total_BB())
 	minBB = solutions[0].total_BB()
-	print [i.total_BB() for i in solutions]
 	[i.assign_Pi(minBB) for i in solutions]
 	print [i.Pi for i in solutions]
 	# sort solution based on Pi (actually, they will have the same ordering as with BB())
 	solutions.sort(key=lambda x: x.Pi)
-	print [i.Pi for i in solutions]
+	# print [i.Pi for i in solutions]
 	print [i.total_BB() for i in solutions]
+
+	# -----START ALGORITHM -----
+	for sol in solutions:
+
+		old_BB = sol.total_BB()
+
+
 
 
 
