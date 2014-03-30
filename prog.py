@@ -91,10 +91,10 @@ def map_traffic_matrix(input_file):
 def create_graph(data):
 	"""due to what it seems to be bugs in copying graphs (attributes are not copied
 	this function returns a graph based on input data. it will serve as to create copies of the graph"""
-	G = nx.DiGraph()
-	G.add_weighted_edges_from(data)
-	[nx.set_node_attributes(G,'cluster', {node: 0}) for node in G.nodes()]
-	return G
+	graph = nx.DiGraph()
+	graph.add_weighted_edges_from(data)
+	[nx.set_node_attributes(graph,'cluster', {node: 0}) for node in graph.nodes()]
+	return graph
 
 
 class Cluster(object):
@@ -104,21 +104,22 @@ class Cluster(object):
 	here, we get the graph G by reference since a collection of clusters have to refer
 	to the same graph, hence, we don't use self.G = G as we do in the Solution object
 	"""
-	def __init__(self, G, cluster_id, nodes):
+	def __init__(self, graph, cluster_id, nodes):
+		self.graph = graph
 		self.cluster_id = cluster_id
-		[nx.set_node_attributes(G,'cluster', {n: cluster_id}) for n in nodes]
-		self.nodes = [x for x,y in G.nodes_iter(data=True) if y == {'cluster': cluster_id}]
+		[nx.set_node_attributes(self.graph,'cluster', {n: cluster_id}) for n in nodes]
+		self.nodes = [x for x,y in self.graph.nodes_iter(data=True) if y == {'cluster': cluster_id}]
 
 	def node_cluster(self, node):
 		""" returns cluster id of this node """ 
-		return G.node[node].items()[0][1]
+		return self.graph.node[node].items()[0][1]
 
 	def get_nodes_attributes(self):
-		return G.nodes(data=True)
+		return self.graph.nodes(data=True)
 
 	def BB(self):
 		""" returns backbone traffic of cluster """
-		outgoing = [(x,y,z) for x,y,z in G.out_edges_iter(self.nodes, data=True)\
+		outgoing = [(x,y,z) for x,y,z in self.graph.out_edges_iter(self.nodes, data=True)\
 				    if self.node_cluster(y) != self.cluster_id and self.node_cluster(x) == self.cluster_id]
 		#print "--------------------BEGIN---------------------"
 		#print self.G.nodes(data=True)
@@ -135,7 +136,7 @@ class Cluster(object):
 	def add_node(self,node):
 		""" HAS TO BE USED ONLY WITH REMOVE FOR SWAP OPERATION ONLY 
 		otherwords, never use this function (assume private)"""
-		nx.set_node_attributes(G,'cluster', {node: self.cluster_id})
+		nx.set_node_attributes(self.graph,'cluster', {node: self.cluster_id})
 		self.nodes.append(node)
 
 	def remove_node(self):
@@ -204,17 +205,18 @@ if __name__ == '__main__':
 
 	# declare new graph
 	data = map_traffic_matrix(input_file)
-	G = create_graph(data)
+	G1 = create_graph(data)
+	print G1.out_degree(8, weight='weight')
 
 	# desired number of clusters and constraints on cluster size and number of solutions 
 	expected_numb_of_clusters = 4
-	max_constraint = int(len(G.nodes())/2)
+	max_constraint = int(len(G1.nodes())/2)
 	min_constraint = 2
 	N = 10
 	# generate N solutions 
 	solutions = []
 	for i in range(N):
-		solutions.append(Solution(G,expected_numb_of_clusters))
+		solutions.append(Solution(G1,expected_numb_of_clusters))
 
 	
 	# get solution with minimum BB
@@ -230,9 +232,6 @@ if __name__ == '__main__':
 
 
 
-
-	
-	
 
 	# print len(G.nodes())
 	# print len(G.edges())
