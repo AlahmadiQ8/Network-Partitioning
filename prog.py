@@ -3,14 +3,13 @@ file input for network traffic
 """
 
 import networkx as nx
-import matplotlib.pyplot as plt
 import random
 import sys
 from math import ceil
 
 def error(str):
 	print str
-	print '---> terminating'
+	print '----> terminating'
 	sys.exit(1)
 
 def check(input_file):
@@ -158,17 +157,37 @@ class Solution(object):
 		"""
 		self.G = G
 		[nx.set_node_attributes(self.G,'cluster', {n: -1}) for n in self.G.nodes()]
-		max_constraint = ceil(len(self.G.nodes())/2.0)
-		min_constraint = 2
-		temp = divmod(len(self.G.nodes()),expected_numb_of_clusters)
-		sample = temp[0] if temp[0] <= max_constraint else error('max_constraint violated')
-		if temp[1] >= min_constraint or temp[1] == 0:
-			sample_last = temp[1] #if temp[1]>=min_constraint or temp[1]==0 else error('min_constraint violated')
-		elif temp[1] == 1: 
-			sample_last = temp[1] + sample if (temp[1] + sample) <= max_constraint else error('max_constraint violated') 
-			expected_numb_of_clusters -= 1
-		else:
-			error('something wrong happened at determining clusters')
+		# max_constraint = ceil(len(self.G.nodes())/2.0)
+		# min_constraint = 2
+		# temp = divmod(len(self.G.nodes()),expected_numb_of_clusters)
+		# sample = temp[0] if temp[0] <= max_constraint else error('max_constraint violated')
+		# if temp[1] >= min_constraint or temp[1] == 0:
+		# 	sample_last = temp[1] #if temp[1]>=min_constraint or temp[1]==0 else error('min_constraint violated')
+		# elif temp[1] == 1: 
+		# 	sample_last = temp[1] + sample if (temp[1] + sample) <= max_constraint else error('max_constraint violated') 
+		# 	expected_numb_of_clusters -= 1
+		# else:
+		# 	error('something wrong happened at determining clusters')
+
+
+		n = len(self.G.nodes())
+		min_diff = 3   # minimum difference in the number of nodes between clusters (to balance clusters)
+		(x,y) = divmod(n,expected_numb_of_clusters)
+		if (abs(x-y) <= min_diff):
+			sample = x 
+			sample_last = y 
+		else: 
+			while(True):
+				n -= 1
+				x = n/expected_numb_of_clusters 
+				y = len(self.G.nodes()) - x*expected_numb_of_clusters
+				if (abs(x-y) <= min_diff):
+					sample = x 
+					sample_last = y
+					break;
+				if n == 0: 
+					error("----> error, cannot balance clusters, adjust number of clusters")
+
 
 
 		nodelist = self.G.nodes()
@@ -183,6 +202,10 @@ class Solution(object):
 			if not nodelist: error('wrong calculations of clusters')
 			self.clusters.append(Cluster(self.G,expected_numb_of_clusters, nodelist))
 
+		sorted_clusters = sorted(self.clusters, key=lambda x: x.num_of_nodes())
+		self.min_constraint = sorted_clusters[0].num_of_nodes()
+		self.max_constraint = ceil(len(self.G.nodes())/2.0)
+
 	def num_of_nodes(self): return sum([i.num_of_nodes() for i in self.clusters])
 
 	def total_BB(self):
@@ -196,13 +219,13 @@ class Solution(object):
 	def move(self):
 		""" randomly moves a node from a cluster to another while 
 		maintaining constraints """
-		max_constraint = ceil(len(self.G.nodes())/2.0)
-		min_constraint = 2
 
-		c1 = random.choice(self.clusters).cluster_id
-		while (self.clusters[c1].num_of_nodes()<=min_constraint): c1 = random.choice(self.clusters).cluster_id
-		c2 = random.choice(self.clusters).cluster_id 
-		while (c2==c1 or self.clusters[c2].num_of_nodes()>max_constraint): c2 = random.choice(self.clusters).cluster_id 
+		templist1 = [x for x in self.clusters if x.num_of_nodes() > self.min_constraint]
+		c1 = random.choice(templist1).cluster_id
+		#while (self.clusters[c1].num_of_nodes()<=self.min_constraint): c1 = random.choice(self.clusters).cluster_id
+		templist2 = [x for x in self.clusters if (x.cluster_id != c1) and (x.num_of_nodes() <= self.max_constraint)]
+		c2 = random.choice(templist2).cluster_id 
+		#while (c2==c1 or self.clusters[c2].num_of_nodes()>self.max_constraint): c2 = random.choice(self.clusters).cluster_id 
 		#print 'move ', c1,' ', c2
 		removed_node = self.clusters[c1].remove_node(random.choice(self.clusters[c1].nodes))
 		self.clusters[c2].add_node(removed_node)
@@ -216,6 +239,7 @@ class Solution(object):
 
 
 if __name__ == '__main__':
+
 	input_file = 'data/trafficMatrix_A(original).txt'
 
 	# declare new graph
@@ -223,38 +247,41 @@ if __name__ == '__main__':
 	#data = [(2,3,3),(3,1,3),(1,2,2),(1,5,1),(5,6,3),(6,4,4),(4,5,2)]
 	G1 = create_graph(data)
 	nn = len(G1.nodes())
+	print '----> number of nodes = ', nn
+	expected_numb_of_clusters = input('enter expected_numb_of_clusters:\n')
+	print '----> expected_numb_of_clusters = ', expected_numb_of_clusters
+	temp_solution = Solution(G1, expected_numb_of_clusters)   # this solution is only to obtain paratmers (min_contraint and max_constraint)
+	print '----> max_constraint = ', temp_solution.max_constraint 
+	print '----> min_constraint = ', temp_solution.min_constraint
+	print '----> number of clusters = ' , len(temp_solution.clusters)
 
-
-	# desired number of clusters and constraints on cluster size and N of solutions 
 	# M : desired number of iterations 
 	# k : limit on how long to spend on a solution 
-	expected_numb_of_clusters = 6
-	max_constraint = ceil(nn/2.0)
-	min_constraint = 2
+	max_constraint = temp_solution.max_constraint
+	min_constraint = temp_solution.min_constraint
 	N = 10
 	M = 20 
 	k = 50 
-	# generate N solutions 
+
+	# ------generate N solutions------ 
 	solutions = []
 	for i in range(N):
 		new_graph = create_graph(data)
 		solutions.append(Solution(new_graph,expected_numb_of_clusters))
-
 	
-	# get solution with minimum BB
+	# ------get solution with minimum BB------
 	print '\ninitial solutions...'
 	print [i.total_BB() for i in solutions]
 	print ''
 	solutions.sort(key=lambda x: x.total_BB())
 	minBB = solutions[0].total_BB()
 	[i.assign_Pi(minBB) for i in solutions]
-	# sort solution based on Pi (actually, they will have the same ordering as with BB())
+	
+	# ------sort solution based on Pi (actually, they will have the same ordering as with BB())------
 	solutions.sort(key=lambda x: x.Pi)
-	print 'sorted solutions based on Pi...'
-	print [i.total_BB() for i in solutions]
-	print ''
 
-	# -----START ALGORITHM -----
+	# ------START ALGORITHM------
+	print '---> start algorithm...'
 	i = 0
 	for l1 in range(M):
 		if i == N: i = 0
@@ -265,49 +292,29 @@ if __name__ == '__main__':
 			if solutions[i].total_BB() < old_BB:
 				pass   # accept new solution 
 			else: 
-				solutions[i].move_back(info)
+				solutions[i].move_back(info) # reject new solution 
 
 		i+=1
 
 	solutions.sort(key=lambda x: x.total_BB())
-	print 'finished algorithm, new solutions are...'
+	print '---> finished algorithm, new solutions are...'
 	print [i.total_BB() for i in solutions]
 	print ''
 
 	print 'clusters for best solution are...'
+	print '----> check total number of nodes = ', len(solutions[0].G.nodes())
 	for v in solutions[0].clusters: 
-		print 'cluster ', v.cluster_id, 'outgoing traffic = ', v.BB()
+		print v
 		print '\t', v.nodes
 
-	print ' total number of nodes ', solutions[0].num_of_nodes(), ' ', len(G1.nodes())
+	print 'writing results to out.txt...'
+	lines = []
+	for v in solutions[0].clusters:
+		line1 = 'cluster%d:' %(v.cluster_id)
+		line2 = " ".join(str(e) for e in v.nodes)
+		lines.extend([line1,line2])
+		lines.append('')
+	lines = '\n'.join(lines)
 
-
-	# print len(G.nodes())
-	# print len(G.edges())
-	# print len([(x,y)  for x,y in G.nodes_iter(data=True) if y == {'cluster': -1}])
-	# print solution.num_of_nodes()
-	# print solution.total_BB()
-
-	# print 'total bb before ', solution.total_BB()
-	# for i in solution.clusters: 
-	# 	print '\t', i.nodes
-
-	# solution.move()
-	# solution.move()
-	# solution.move()
-	# solution.move()
-	# solution.move()
-	# solution.move()
-	# solution.move()
-	# solution.move()
-	# solution.move()
-	# solution.move()
-	# solution.move()
-
-	# print 'total bb after', solution.total_BB()
-	# for i in solution.clusters: 
-	# 	print '\t', i.nodes
-
-
-
-
+	with open('data/out2.txt', 'w') as f:
+		f.writelines(lines)
