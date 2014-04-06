@@ -1,7 +1,3 @@
-
-
-
-
 * graph must be connected, otherwize a division by zero error may occur
 
 * input file must be in a traffic matrix format like the files Dr.Nayaki emailed me (Traffic.txt & trafficMatrix_A(original).txt)
@@ -66,7 +62,3 @@ for l1 = 0:M:    # outer loop
 
 sort solutions, 
 print best solution to text file 
-
-		
-
-

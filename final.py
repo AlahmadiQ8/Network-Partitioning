@@ -222,19 +222,20 @@ if __name__ == '__main__':
 	G1 = create_graph(data)
 	nn = len(G1.nodes())
 	print '----> number of nodes = ', nn
-	expected_numb_of_clusters = input('enter expected_numb_of_clusters:\n')
+	expected_numb_of_clusters = 6 #input('enter expected_numb_of_clusters:\n')
 	print '----> expected_numb_of_clusters = ', expected_numb_of_clusters
 	temp_solution = Solution(G1, expected_numb_of_clusters)   # this solution is only to obtain paratmers (min_contraint and max_constraint)
 	print '----> max_constraint = ', temp_solution.max_constraint 
 	print '----> min_constraint = ', temp_solution.min_constraint
 	print '----> number of clusters = ' , len(temp_solution.clusters)
 
+	# N : number of solutions to generate 
 	# M : desired number of iterations 
 	# k : limit on how long to spend on a solution 
 	max_constraint = temp_solution.max_constraint
 	min_constraint = temp_solution.min_constraint
 	N = 10
-	M = 50 
+	M = 20 
 	k = 50 
 
 	# ------generate N solutions------ 

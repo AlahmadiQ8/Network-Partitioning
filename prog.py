@@ -239,7 +239,6 @@ class Solution(object):
 
 
 if __name__ == '__main__':
-
 	input_file = 'data/trafficMatrix_A(original).txt'
 
 	# declare new graph
@@ -254,7 +253,9 @@ if __name__ == '__main__':
 	print '----> max_constraint = ', temp_solution.max_constraint 
 	print '----> min_constraint = ', temp_solution.min_constraint
 	print '----> number of clusters = ' , len(temp_solution.clusters)
+	for i in temp_solution.clusters: print '\t----> cluster', i.cluster_id, ' has ', i.num_of_nodes(), ' nodes'
 
+	# desired number of clusters and constraints on cluster size and N of solutions 
 	# M : desired number of iterations 
 	# k : limit on how long to spend on a solution 
 	max_constraint = temp_solution.max_constraint
@@ -302,7 +303,6 @@ if __name__ == '__main__':
 	print ''
 
 	print 'clusters for best solution are...'
-	print '----> check total number of nodes = ', len(solutions[0].G.nodes())
 	for v in solutions[0].clusters: 
 		print v
 		print '\t', v.nodes
