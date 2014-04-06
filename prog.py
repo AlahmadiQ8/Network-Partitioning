@@ -215,6 +215,7 @@ class Solution(object):
 	def assign_Pi(self, minBB):
 		""" assigns probability Pi = BB/minBB - 1 as dicussed with Nayaki """
 		self.Pi = float(self.total_BB())/minBB - 1 
+		return self.Pi
 
 	def move(self):
 		""" randomly moves a node from a cluster to another while 
@@ -256,13 +257,14 @@ if __name__ == '__main__':
 	for i in temp_solution.clusters: print '\t----> cluster', i.cluster_id, ' has ', i.num_of_nodes(), ' nodes'
 
 	# desired number of clusters and constraints on cluster size and N of solutions 
+	#
 	# M : desired number of iterations 
-	# k : limit on how long to spend on a solution 
+	# k : limit on how long to operate (swap) on a generation
 	max_constraint = temp_solution.max_constraint
 	min_constraint = temp_solution.min_constraint
 	N = 10
 	M = 20 
-	k = 50 
+	k_limit = 100 
 
 	# ------generate N solutions------ 
 	solutions = []
@@ -285,17 +287,23 @@ if __name__ == '__main__':
 	print '---> start algorithm...'
 	i = 0
 	for l1 in range(M):
-		if i == N: i = 0
+		for i in range(N):
+			count = 0
+			k = 0
+			while(count < M):
+				old_BB = solutions[i].total_BB()
+				info = solutions[i].move()
+				if solutions[i].total_BB() < old_BB:
+					pass   # accept new solution 
+				else: 
+					solutions[i].move_back(info) # reject new solution 
+					k += 1
+				if (k == k_limit): 
+					break
+				else: 
+					count += 1
+		#solutions.sort(key=lambda x: x.total_BB())
 
-		for l2 in range(k):
-			old_BB = solutions[i].total_BB()
-			info = solutions[i].move()
-			if solutions[i].total_BB() < old_BB:
-				pass   # accept new solution 
-			else: 
-				solutions[i].move_back(info) # reject new solution 
-
-		i+=1
 
 	solutions.sort(key=lambda x: x.total_BB())
 	print '---> finished algorithm, new solutions are...'

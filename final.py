@@ -236,7 +236,7 @@ if __name__ == '__main__':
 	min_constraint = temp_solution.min_constraint
 	N = 10
 	M = 20 
-	k = 50 
+	k_limit = 50 
 
 	# ------generate N solutions------ 
 	solutions = []
@@ -257,19 +257,23 @@ if __name__ == '__main__':
 
 	# ------START ALGORITHM------
 	print '---> start algorithm...'
-	i = 0
+
 	for l1 in range(M):
-		if i == N: i = 0
-
-		for l2 in range(k):
-			old_BB = solutions[i].total_BB()
-			info = solutions[i].move()
-			if solutions[i].total_BB() < old_BB:
-				pass   # accept new solution 
-			else: 
-				solutions[i].move_back(info) # reject new solution 
-
-		i+=1
+		for i in range(N):
+			count = 0
+			k = 0
+			while(count < M):
+				old_BB = solutions[i].total_BB()
+				info = solutions[i].move()
+				if solutions[i].total_BB() < old_BB:
+					pass   # accept new solution 
+				else: 
+					solutions[i].move_back(info) # reject new solution 
+					k += 1
+				if (k == k_limit): 
+					break
+				else: 
+					count += 1
 
 	solutions.sort(key=lambda x: x.total_BB())
 	print '---> finished algorithm, new solutions are...'
