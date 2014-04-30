@@ -1,3 +1,7 @@
+# Network Graph Partitioning Using Simulated Bee Colony Algorithm 
+
+## Notes
+
 * graph must be connected, otherwize a division by zero error may occur
 
 * input file must be in a traffic matrix format like the files Dr.Nayaki emailed me (Traffic.txt & trafficMatrix_A(original).txt)
@@ -8,8 +12,6 @@
 * any self looping node is ignored 
 
 * any pair of outgoing and incoming node can only appear once, any additional pairs are ignored 
-
-* if program is stuck in infinite loop, it is most likely that you chose an inappropriate number of clusters
 
 * currently, the user must hardcode parameters in main()
 
