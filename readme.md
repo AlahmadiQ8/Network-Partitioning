@@ -1,5 +1,10 @@
 # Network Graph Partitioning Using Simulated Bee Colony Algorithm 
-
+ 
+Ipmlemented based on the following papers: 
+ 
+[Network Redesign through Clusters Consolidation](http://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=05224104)
+[Graph partitioning using a Simulated Bee Colony algorithm](http://ieeexplore.ieee.org/xpls/abs_all.jsp?arnumber=6009581)
+ 
 ## Notes
 
 * graph must be connected, otherwize a division by zero error may occur
