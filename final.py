@@ -236,7 +236,7 @@ if __name__ == '__main__':
 	min_constraint = temp_solution.min_constraint
 	N = 10
 	M = 20 
-	k_limit = 50 
+	k_limit = 200 
 
 	# ------generate N solutions------ 
 	solutions = []
@@ -259,21 +259,24 @@ if __name__ == '__main__':
 	print '---> start algorithm...'
 
 	for l1 in range(M):
+		print '----> ', l1, 'th iteration'
 		for i in range(N):
+			print '----> ', ('*' * (i+1))
 			count = 0
 			k = 0
 			while(count < M):
 				old_BB = solutions[i].total_BB()
-				info = solutions[i].move()
+				info = solutions[i].move()     # move a node to another cluser and save info in case new solution is rejected
 				if solutions[i].total_BB() < old_BB:
 					pass   # accept new solution 
 				else: 
 					solutions[i].move_back(info) # reject new solution 
 					k += 1
 				if (k == k_limit): 
-					break
-				else: 
 					count += 1
+					k=0
+						
+
 
 	solutions.sort(key=lambda x: x.total_BB())
 	print '---> finished algorithm, new solutions are...'

@@ -121,11 +121,6 @@ class Cluster(object):
 		""" returns backbone traffic of cluster """
 		outgoing = [(x,y,z) for x,y,z in self.graph.out_edges_iter(self.nodes, data=True)\
 				    if self.node_cluster(y) != self.cluster_id and self.node_cluster(x) == self.cluster_id]
-		#print "--------------------BEGIN---------------------"
-		#print self.G.nodes(data=True)
-		#print "##########################################"
-		#print '---> outgoing edges from cluster_%d are %s\nnode 2: %d, node 4: %d' % (self.cluster_id, str(outgoing).strip('[]'), self.node_cluster(2), self.node_cluster(4))
-		#print "--------------------END---------------------"
 		return sum([z['weight'] for x,y,z in outgoing])
 
 	def num_of_nodes(self): return len(self.nodes)
@@ -157,19 +152,7 @@ class Solution(object):
 		"""
 		self.G = G
 		[nx.set_node_attributes(self.G,'cluster', {n: -1}) for n in self.G.nodes()]
-		# max_constraint = ceil(len(self.G.nodes())/2.0)
-		# min_constraint = 2
-		# temp = divmod(len(self.G.nodes()),expected_numb_of_clusters)
-		# sample = temp[0] if temp[0] <= max_constraint else error('max_constraint violated')
-		# if temp[1] >= min_constraint or temp[1] == 0:
-		# 	sample_last = temp[1] #if temp[1]>=min_constraint or temp[1]==0 else error('min_constraint violated')
-		# elif temp[1] == 1: 
-		# 	sample_last = temp[1] + sample if (temp[1] + sample) <= max_constraint else error('max_constraint violated') 
-		# 	expected_numb_of_clusters -= 1
-		# else:
-		# 	error('something wrong happened at determining clusters')
-
-
+		# the code divide nodes into balanced clusters 
 		n = len(self.G.nodes())
 		min_diff = 3   # minimum difference in the number of nodes between clusters (to balance clusters)
 		(x,y) = divmod(n,expected_numb_of_clusters)
@@ -187,17 +170,13 @@ class Solution(object):
 					break;
 				if n == 0: 
 					error("----> error, cannot balance clusters, adjust number of clusters")
-
-
-
+		# construct clusters 
 		nodelist = self.G.nodes()
 		self.clusters = []
 		for i in range(expected_numb_of_clusters):
 			sample_nodes = random.sample(nodelist, sample)
-			# print sample_nodes
 			self.clusters.append(Cluster(self.G,i,sample_nodes))
 			nodelist = [n for n in nodelist if n not in sample_nodes]
-			# print nodelist
 		if sample_last:
 			if not nodelist: error('wrong calculations of clusters')
 			self.clusters.append(Cluster(self.G,expected_numb_of_clusters, nodelist))
@@ -215,7 +194,6 @@ class Solution(object):
 	def assign_Pi(self, minBB):
 		""" assigns probability Pi = BB/minBB - 1 as dicussed with Nayaki """
 		self.Pi = float(self.total_BB())/minBB - 1 
-		return self.Pi
 
 	def move(self):
 		""" randomly moves a node from a cluster to another while 
@@ -223,47 +201,41 @@ class Solution(object):
 
 		templist1 = [x for x in self.clusters if x.num_of_nodes() > self.min_constraint]
 		c1 = random.choice(templist1).cluster_id
-		#while (self.clusters[c1].num_of_nodes()<=self.min_constraint): c1 = random.choice(self.clusters).cluster_id
 		templist2 = [x for x in self.clusters if (x.cluster_id != c1) and (x.num_of_nodes() <= self.max_constraint)]
 		c2 = random.choice(templist2).cluster_id 
-		#while (c2==c1 or self.clusters[c2].num_of_nodes()>self.max_constraint): c2 = random.choice(self.clusters).cluster_id 
-		#print 'move ', c1,' ', c2
 		removed_node = self.clusters[c1].remove_node(random.choice(self.clusters[c1].nodes))
 		self.clusters[c2].add_node(removed_node)
 		return (c1,c2,removed_node)
 
 	def move_back(self, info):
 		(c1,c2,removed_node) = info
-		#print 'move back ', c2,' ', c1
 		self.clusters[c1].add_node(self.clusters[c2].remove_node(removed_node))
 
 
 
 if __name__ == '__main__':
+
 	input_file = 'data/trafficMatrix_A(original).txt'
 
 	# declare new graph
 	data = map_traffic_matrix(input_file)
-	#data = [(2,3,3),(3,1,3),(1,2,2),(1,5,1),(5,6,3),(6,4,4),(4,5,2)]
 	G1 = create_graph(data)
 	nn = len(G1.nodes())
 	print '----> number of nodes = ', nn
-	expected_numb_of_clusters = input('enter expected_numb_of_clusters:\n')
+	expected_numb_of_clusters = 6 #input('enter expected_numb_of_clusters:\n')
 	print '----> expected_numb_of_clusters = ', expected_numb_of_clusters
 	temp_solution = Solution(G1, expected_numb_of_clusters)   # this solution is only to obtain paratmers (min_contraint and max_constraint)
 	print '----> max_constraint = ', temp_solution.max_constraint 
 	print '----> min_constraint = ', temp_solution.min_constraint
 	print '----> number of clusters = ' , len(temp_solution.clusters)
-	for i in temp_solution.clusters: print '\t----> cluster', i.cluster_id, ' has ', i.num_of_nodes(), ' nodes'
 
-	# desired number of clusters and constraints on cluster size and N of solutions 
-	#
+	# N : number of solutions to generate 
 	# M : desired number of iterations 
-	# k : limit on how long to operate (swap) on a generation
+	# k : limit on how long to spend on a solution 
 	max_constraint = temp_solution.max_constraint
 	min_constraint = temp_solution.min_constraint
 	N = 10
-	M = 20 
+	M = 50 
 	k_limit = 100 
 
 	# ------generate N solutions------ 
@@ -285,16 +257,17 @@ if __name__ == '__main__':
 
 	# ------START ALGORITHM------
 	print '---> start algorithm...'
-	i = 0
+
 	for l1 in range(M):
 		for i in range(N):
 			count = 0
 			k = 0
 			while(count < M):
 				old_BB = solutions[i].total_BB()
-				info = solutions[i].move()
+				info = solutions[i].move()     # move a node to another cluser and save info in case new solution is rejected
 				if solutions[i].total_BB() < old_BB:
 					pass   # accept new solution 
+					k = 0
 				else: 
 					solutions[i].move_back(info) # reject new solution 
 					k += 1
@@ -302,8 +275,6 @@ if __name__ == '__main__':
 					break
 				else: 
 					count += 1
-		#solutions.sort(key=lambda x: x.total_BB())
-
 
 	solutions.sort(key=lambda x: x.total_BB())
 	print '---> finished algorithm, new solutions are...'
@@ -311,6 +282,7 @@ if __name__ == '__main__':
 	print ''
 
 	print 'clusters for best solution are...'
+	print '----> check total number of nodes = ', len(solutions[0].G.nodes())
 	for v in solutions[0].clusters: 
 		print v
 		print '\t', v.nodes
@@ -324,5 +296,5 @@ if __name__ == '__main__':
 		lines.append('')
 	lines = '\n'.join(lines)
 
-	with open('data/out2.txt', 'w') as f:
+	with open('data/out.txt', 'w') as f:
 		f.writelines(lines)

@@ -15,7 +15,7 @@
 
 * runtime is a bit slow, depend on k & M
 
--------RUNNING PROGRAM-------
+## RUNNING PROGRAM
 * on terminal (mac): python final.py 
 * as i mentioned before, as of now, everything is hardcoded in main() 
 * networkx must be installed in order to run the python script
@@ -25,31 +25,28 @@
 
 	
 
--------USER INPUTS-------
+## USER INPUTS
 * input_file: traffic matrix 
 * expected_numb_of_clusters 
-	desired number of clusters, actual numer may be increased by
-	one to balance all clusters 
+ desired number of clusters, actual numer may be increased by one to balance all clusters 
 * M : desired number of iterations 
 * k : limit on how long to spend on a solution 
 
--------INITIALIZE--------
-choose N solutions. where each solution i: 
-	* form C clusters (roughly equal) with the following constraints:
-		- maximum number of nodes = total number of nodes / 2 
-		- minumum number of nodes = 2 
-	  These constraints are maintained through each move() operation (move node from one cluster to another)
-	  e.i. these constraints are alreade considered in move() operation
+## Algorithm Description 
+### INITIALIZE
+ choose N solutions. where each solution i: 
+* form C clusters (roughly equal) with the following constraints:
+ - maximum number of nodes = total number of nodes / 2 
+ - minumum number of nodes = 2 
+  These constraints are maintained through each move() operation (move node from one cluster to another) e.i. these constraints are alreade considered in move() operation
+* add attribute: total BB traffic (sum of outgoing traffict from each cluster). this is the attribute that we aim to minimize 
+* add attribute: probability Pi = (BB(i)/min(BB(i))) - 1
 
-	* add attribute: total BB traffic (sum of outgoing traffict from each cluster). 
-	  this is the attribute that we aim to minimize 
+### SORT SOLUTIONS
+ sort solutions in ascending order based on Pi attribute
 
-	* add attribute: probability Pi = (BB(i)/min(BB(i))) - 1
-
--------SORT SOLUTIONS--------
-sort solutions in ascending order based on Pi attribute
-
-------START ALGORITHM------
+### START ALGORITHM
+```
 for l1 = 0:M:    # outer loop
 	for a partiulcar solution, loop from 0:k:   # inner loop
 		old_BB = current BB
@@ -62,3 +59,4 @@ for l1 = 0:M:    # outer loop
 
 sort solutions, 
 print best solution to text file 
+```
