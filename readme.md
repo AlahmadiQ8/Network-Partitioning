@@ -23,16 +23,6 @@
 
 * runtime is a bit slow, depend on k & M
 
-## RUNNING PROGRAM
-* on terminal (mac): python final.py 
-* as i mentioned before, as of now, everything is hardcoded in main() 
-* networkx must be installed in order to run the python script
-* on a mac, it's easily installed in terminal: 'sudo easy_install networkx', I do not know how on windows but it should be easy
-* current paramters assumes you have a data folder that has the input files
-* results are saved in 'data/out.txt'
-
-	
-
 ## USER INPUTS
 * input_file: traffic matrix 
 * expected_numb_of_clusters 
